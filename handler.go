@@ -1,4 +1,4 @@
-package fibre_gqlgen
+package FiberGQLGen
 
 import (
 	"bytes"
