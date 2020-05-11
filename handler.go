@@ -1,7 +1,9 @@
 package fibre_gqlgen
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/errcode"
 	"github.com/99designs/gqlgen/graphql/executor"
@@ -114,7 +116,12 @@ func (s *Server) ServeGraphQL(api *fiber.Ctx) {
 	var wg = &sync.WaitGroup{}
 	var params graphql.RawParams
 
-	if err := api.BodyParser(&params); err != nil {
+	b := bytes.NewReader(api.Fasthttp.PostBody())
+
+	decoder := json.NewDecoder(b)
+	decoder.UseNumber()
+
+	if err := decoder.Decode(&params); err != nil {
 		_ = api.JSON(map[string]interface{}{
 			"success":      false,
 			"message":      "Cannot Use Request. Ensure You have provided a valid schema.",
