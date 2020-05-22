@@ -11,10 +11,8 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/gofiber/fiber"
 	"github.com/vektah/gqlparser/v2/gqlerror"
-	"log"
 	"net/http"
 	"sync"
-	"time"
 )
 
 type Server struct {
@@ -140,27 +138,9 @@ func (s *Server) ServeGraphQL(api *fiber.Ctx) {
 		}
 	}()
 
-	ch := make(chan ReturnSignal)
-	wg.Add(1)
-	go func(wg *sync.WaitGroup, c chan<- ReturnSignal) {
-		defer wg.Done()
-		childContext := graphql.StartOperationTrace(api.Fasthttp)
-		output := ProcessExecution(&params, s.exec, childContext)
-		ch <- output
-	}(wg, ch)
-	select {
-	case signal := <-ch:
-		api.Status(signal.StatusCode)
-		_ = api.JSON(signal.Response)
-		return
-	case <-time.After(5 * time.Second):
-		log.Println("timed out")
-		api.Status(504)
-		_ = api.JSON(map[string]interface{}{
-			"success":      false,
-			"message":      "Cancelled, this operation has timed out.",
-			"returnStatus": "NOT_OK",
-		})
-		return
-	}
+	childContext := graphql.StartOperationTrace(api.Fasthttp)
+	output := ProcessExecution(&params, s.exec, childContext)
+	api.Status(output.StatusCode)
+	_ = api.JSON(output.Response)
+	return
 }
