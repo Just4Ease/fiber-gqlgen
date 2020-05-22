@@ -12,7 +12,6 @@ import (
 	"github.com/gofiber/fiber"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"net/http"
-	"sync"
 )
 
 type Server struct {
@@ -111,7 +110,6 @@ type ReturnSignal struct {
 }
 
 func (s *Server) ServeGraphQL(api *fiber.Ctx) {
-	var wg = &sync.WaitGroup{}
 	var params graphql.RawParams
 
 	b := bytes.NewReader(api.Fasthttp.PostBody())
